@@ -1,16 +1,19 @@
 # devtools::install_github("eddelbuettel/rbenchmark")
 # library(benchmark)
 
+
 # benchmark("MAGIC" = {})
 
 # splatter - Simple Simulation of Single-cell RNA Sequencing Data
 
 library(feather)
+library(reticulate)
+use_python('/home/mraevsky/miniconda3/bin/python3.7', required = TRUE)
 
 # Default - matrixes - cells-by-gene (cell name include celltype name)
-sc_exp_data = get(load("~/MIPT/epi_impute/data/GSE117498_scRNAseq_TFs.Rdata"))
-bulk_peaks_data = get(load("~/MIPT/epi_impute/data/bulk_ATAC_TFs.Rdata"))
-bulk_exp_data = get(load("~/MIPT/epi_impute/data/GSE87195_bulk_RNAseq_dataset.Rdata"))
+sc_exp_data = get(load("~/MIPT/epi-impute/data/GSE117498_scRNAseq_TFs.Rdata"))
+bulk_peaks_data = get(load("~/MIPT/epi-impute/data/bulk_ATAC_TFs.Rdata"))
+bulk_exp_data = get(load("~/MIPT/epi-impute/data/GSE87195_bulk_RNAseq_dataset.Rdata"))
 
 
 magic_pipeline <- function(data){
@@ -28,9 +31,9 @@ magic_pipeline <- function(data){
 }
 
 
-# Run magic pipeline
-magic_results = magic_pipeline(sc_exp_data)
-save(magic_results, file = './magic_results.Rdata')
+# # Run magic pipeline
+# magic_results = magic_pipeline(sc_exp_data)
+# save(magic_results, file = './magic_results.Rdata')
 
 
 scrabble_preprocess <- function(sc_data, bulk_data){
@@ -79,7 +82,6 @@ scrabble_preprocess <- function(sc_data, bulk_data){
 	scramble_sc_data_list = lapply(scramble_sc_data_list, function(x){x$cells = NULL; t(x)})
 
 	return(list(scramble_sc_data_list, scramble_bulk_data_list))
-
 }
 
 
@@ -108,34 +110,15 @@ scrabble_pipeline <- function(sc_data, bulk_data){
 }
 
 scrabble_results = scrabble_pipeline(sc_exp_data, bulk_exp_data)
-save(scrabble_results, file = "~/MIPT/epi_impute/scrabble_results.Rdata")
-
-# scrabble_pipeline <- function(scramble_sc_data_list, scramble_bulk_data_list){
-# 	if (!require("SCRABBLE")) install.packages("SCRABBLE")
-# 	if (!require("parallel")) install.packages("parallel")
-# 	print('Start collecting the list elements')
-# 	scrabble_data = list()
-# 	for(i in 1:length(scramble_bulk_data_list)){
-# 	    celltype_list = list(scramble_sc_data_list[[i]], scramble_bulk_data_list[[i]])
-# 	    scrabble_data = list.append(scrabble_data, celltype_list)
-# 	}
-
-# 	parameter <- c(1, 1e-6, 1e-4)
-# 	print('Start scrabble')
-# 	runtime = system.time({
-# 		result = mclapply(scrabble_data, function(x){scrabble(x, parameter = parameter)}, mc.cores = detectCores() - 2)
-# 	})
-# 	print('Finish scrabble')
-# 	return(list(result = as.data.frame(result),
-# 				runtime = runtime))
-# }
+save(scrabble_results, file = "~/MIPT/epi-impute/scrabble_results.Rdata")
 
 
 saver_pipeline <- function(sc_data){
+	if (!require('devtools')) install.packages('devtools')
 	if (!require("SAVER")) devtools::install_github("mohuangx/SAVER@*release")
 	if (!require("parallel")) install.packages("parallel")
 
-	# convert ot gene-by-cells matrix
+	# convert to gene-by-cells matrix
 	sc_data = as.data.frame(t(sc_data))
 	runtime = system.time({
 		result = saver(sc_data, ncores = detectCores() - 2)
@@ -150,6 +133,7 @@ save(saver_results, file = './saver_results.Rdata')
 
 
 scimpute_pipeline <- function(sc_data){
+	if (!require('devtools')) install.packages('devtools')
 	if (!require("scImpute")) devtools::install_github("Vivianstats/scImpute")
 	if (!require("dplyr")) install.packages("dplyr")
 	if (!require("parallel")) install.packages("parallel")
@@ -177,9 +161,43 @@ scimpute_pipeline <- function(sc_data){
 
 	})
 	result = read.table('./scimpute_count.csv', sep=',')
+	file.remove('./scimpute_count.csv')
 
 	return(list(result = result,
 				runtime = runtime))
+}
+
+
+drimpute_pipeline <- function(sc_data){
+	if (!require('devtools')) install.packages('devtools')
+	if (!require("DrImpute")) devtools::install_github("gongx030/DrImpute")
+
+	# convert ot gene-by-cells matrix
+	sc_data = as.data.frame(t(sc_data))
+	sc_data_log <- log(sc_data + 1)
+
+	runtime = system.time({
+		result <- DrImpute(sc_data_log)
+	})
+
+	return(list(result = result,
+				runtime = runtime))
+}
+
+
+dca_pipeline <- function(sc_data){
+	if (!require('reticulate')) install.packages('reticulate')
+	source_python("run_dca.py")
+	# convert to gene-by-cells matrix
+	sc_exp = as.data.frame(t(sc_data))
+	write.csv(sc_exp, "tmp_sc_data.csv", quote = FALSE)
+
+	results = run_dca("tmp_sc_data.csv")
+
+	file.remove("tmp_sc_data.csv")
+
+	return(list(result = results[[0]],
+				runtime = results[[1]]))
 }
 
 
@@ -204,6 +222,8 @@ define_negative_class <- function(sc_data, bulk_exp_data){
 # Generate datasets of different sparcity from given dataset
 eval_metrics_on_sparced_data <- function(sc_data, simulated_dropouts_ratio, bulk_data_for_TN, imputation_func, ...){
 	if (!require("dplyr")) install.packages("dplyr")
+
+	set.seed(42)
 
 	initial_sparcity = sum(sc_data == 0) / (dim(sc_data)[1] * dim(sc_data)[2])
 	print(paste0("Initial sparcity of the datasets is ", round(initial_sparcity, 2), '%'))
@@ -264,27 +284,27 @@ magic_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data,
 														  magic_pipeline)
 View(magic_benchmarking_results)
 
-epi_impute_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data, 
+epi-impute_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data, 
 															   simulated_dropouts_ratio = 0.25, 
 															   bulk_data_for_TN = bulk_exp_data,
-															   epi_impute,
+															   epi-impute,
 															   atac_bin_thrld = 100)
-View(epi_impute_benchmarking_results)
+View(epi-impute_benchmarking_results)
 
 
 # Find optimal thresholds
 thresholds = c(20, 50, 100, 150, 200)
 for (i in 1:length(thresholds)) {
-	epi_impute_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data, 
+	epi-impute_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data, 
 															   simulated_dropouts_ratio = 0.25, 
 															   bulk_data_for_TN = bulk_exp_data,
-															   epi_impute,
+															   epi-impute,
 															   atac_bin_thrld = thresholds[i])
 	print('------------')
 	print(paste0("used threshold: ", thresholds[i]))
-	print(paste0("recall: ", epi_impute_benchmarking_results[["recall"]]))
-	print(paste0("specifity: ", epi_impute_benchmarking_results[["specifity"]]))
-	print(paste0("FDR: ", epi_impute_benchmarking_results[["FDR"]]))
+	print(paste0("recall: ", epi-impute_benchmarking_results[["recall"]]))
+	print(paste0("specifity: ", epi-impute_benchmarking_results[["specifity"]]))
+	print(paste0("FDR: ", epi-impute_benchmarking_results[["FDR"]]))
 	print('------------')
 }
 
@@ -326,9 +346,9 @@ for (i in 1:length(thresholds)) {
 # 														 simulated_dropouts_ratio = 0.25,  
 # 														 magic_pipeline)
 
-# epi_impute_benchmarking_results = eval_recall_on_sparced_data(sc_exp_data, 
+# epi-impute_benchmarking_results = eval_recall_on_sparced_data(sc_exp_data, 
 # 															  simulated_dropouts_ratio = 0.25, 
-# 															  epi_impute)
+# 															  epi-impute)
 
 
 
@@ -340,7 +360,7 @@ for (i in 1:length(thresholds)) {
 # 							                    dendrogram='none', Rowv=FALSE, Colv=FALSE, trace='none',
 # 									            main = "Origianl data")
 
-# heatmap.2(as.matrix(epi_impute_benchmarking_results[[2]]), xlab = "cells", ylab = "genes",
+# heatmap.2(as.matrix(epi-impute_benchmarking_results[[2]]), xlab = "cells", ylab = "genes",
 # 									            labRow = FALSE, labCol = FALSE,
 # 							                    margins = c(2, 2),
 # 							                    dendrogram='none', Rowv=FALSE, Colv=FALSE, trace='none',

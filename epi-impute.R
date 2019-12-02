@@ -27,7 +27,7 @@ knonwn_tfs_ = knonwn_tfs_$X1
 # rownames(sc_exp_data) = sc_exp_data$gene
 # sc_exp_data$gene = NULL
 
-epi_impute <- function(sc_exp_data, atac_bin_thrld = 0, 
+epi_impute <- function(sc_exp_data, atac_bin_thrld = 100, 
 									sc_atac_data = sc_atac_data_, 
 									sc_atac_cell_names = sc_atac_cell_names_, 
 									sc_atac_peaks_ann = sc_atac_peaks_ann_, 
