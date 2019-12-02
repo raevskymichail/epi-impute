@@ -201,8 +201,12 @@ dca_pipeline <- function(sc_data){
 }
 
 
+# coupledNMF_pipeline <- function(){
+	
+# }
 
-define_negative_class <- function(sc_data, bulk_exp_data){
+
+define_negative_class_via_bulk <- function(sc_data, bulk_exp_data){
 	sc_data = sc_data[, order(colnames(sc_data))]
 	bulk_exp_data = bulk_exp_data[, order(colnames(bulk_exp_data))]
 
@@ -232,7 +236,7 @@ eval_metrics_on_sparced_data <- function(sc_data, simulated_dropouts_ratio, bulk
 
 	# Consider negative class as zeros both in sc and bulk RNA data
 	# negative -> True, positive & drop-outs -> False
-	is_negative_class = define_negative_class(sc_data, bulk_data_for_TN)
+	is_negative_class = define_negative_class_via_bulk(sc_data, bulk_data_for_TN)
 	negative_vals = sc_data[is_negative_class]
 	negative_class_size = length(negative_vals)
 
