@@ -101,7 +101,7 @@ save(bulk_peaks_data, file = "~/MIPT/epi_impute/data/bulk_ATAC_TFs.Rdata")
 
 # Preprocess bulk data
 
-bulk_exp_data = read_feather('~/scRNA_ATAC_task/data/GSE87195_bulk_RNAseq_dataset.feather')
+bulk_exp_data = read_feather('~/MIPT/scRNA_ATAC_task/data/GSE87195_bulk_RNAseq_dataset.feather')
 bulk_exp_data = as.data.frame(bulk_exp_data)
 # bulk_exp_data = bulk_exp_data[bulk_exp_data$gene %in% homo_sapiens.TFs,]
 bulk_exp_data = bulk_exp_data[bulk_exp_data$gene %in% colnames(sc_exp_data),]
@@ -109,5 +109,6 @@ rownames(bulk_exp_data) = bulk_exp_data$gene
 bulk_genes = bulk_exp_data$gene
 bulk_exp_data$gene = NULL
 bulk_exp_data = bulk_exp_data[,-1] # drop CLP if needed
+bulk_exp_data = as.data.frame(t(bulk_exp_data))
 
 save(bulk_exp_data, file = "~/MIPT/epi_impute/data/GSE87195_bulk_RNAseq_dataset.Rdata")
