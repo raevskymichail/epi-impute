@@ -8,18 +8,15 @@ setwd('~/MIPT/')
 sc_atac_cell_names <- read_csv("data/GSE96769_cell_names_matrix.csv")
 sc_atac_data <- read_feather("data/GSE96769_scATACseq_matrix.feather")
 sc_atac_peaks_ann <- read_csv("data/GSE96769_PeakFile.csv")
-knonwn_tfs <- read_csv("scRNA_ATAC_task/INTREGNET_Reproducible/AnimalTFDB_TF.bed", col_names = FALSE)
-knonwn_tfs = knonwn_tfs$X1
-sc_exp_data = get(load("~/MIPT/epi_impute/data/GSE117498_scRNAseq_TFs.Rdata"))
+sc_exp_data = get(load("~/MIPT/epi_impute/data/GSE117498_scRNAseq_genes.Rdata"))
 
 
 # Import scATACseq data and metadata
 
-sc_atac_cell_names_ <- read_csv("data/GSE96769_cell_names_matrix.csv")
-sc_atac_data_ <- read_feather("data/GSE96769_scATACseq_matrix.feather")
-sc_atac_peaks_ann_ <- read_csv("data/GSE96769_PeakFile.csv")
-knonwn_tfs_ <- read_csv("scRNA_ATAC_task/INTREGNET_Reproducible/AnimalTFDB_TF.bed", col_names = FALSE)
-knonwn_tfs_ = knonwn_tfs_$X1
+sc_atac_cell_names_ <- read_csv("/home/mraevsky/MIPT/data/GSE96769_cell_names_matrix.csv")
+sc_atac_data_ <- read_feather("/home/mraevsky/MIPT/data/GSE96769_scATACseq_matrix.feather")
+sc_atac_peaks_ann_ <- read_csv("/home/mraevsky/MIPT/data/GSE96769_PeakFile.csv")
+
 
 # Load scRNAseq dataset that will be imputed
 
@@ -30,9 +27,9 @@ knonwn_tfs_ = knonwn_tfs_$X1
 epi_impute <- function(sc_exp_data, atac_bin_thrld = 100, 
 									sc_atac_data = sc_atac_data_, 
 									sc_atac_cell_names = sc_atac_cell_names_, 
-									sc_atac_peaks_ann = sc_atac_peaks_ann_, 
-									knonwn_tfs = knonwn_tfs_){
+									sc_atac_peaks_ann = sc_atac_peaks_ann_){
 	# sc_exp_data should be a cells x genes matrix 
+	if (!require("rlist")) install.packages("rlist")
 
 	sc_exp_data = as.data.frame(t(sc_exp_data))
 	sc_exp_data$gene = rownames(sc_exp_data)
@@ -40,23 +37,22 @@ epi_impute <- function(sc_exp_data, atac_bin_thrld = 100,
 	# Create version of ATAC matrix with only promoter peaks
 
 	promoters = sc_atac_peaks_ann[grepl('promoter|TSS', sc_atac_peaks_ann$X7),]
-	promoters_tfs = promoters[promoters$X13 %in% knonwn_tfs,]
-	promoters_tfs = promoters_tfs[order(promoters_tfs$X13),]
+	promoters_genes = promoters[order(promoters$X13),]
 
-	sc_atac_data = merge(sc_atac_data, promoters_tfs[c('X13', 'PeakFile_Peak_ID')], by = 'PeakFile_Peak_ID')
+	sc_atac_data = merge(sc_atac_data, promoters_genes[c('X13', 'PeakFile_Peak_ID')], by = 'PeakFile_Peak_ID')
 
 	sc_atac_data = aggregate(. ~ X13, subset(sc_atac_data, select = - PeakFile_Peak_ID), sum)
-	sc_atac_tfs = sc_atac_data$X13
+	sc_atac_genes = sc_atac_data$X13
 	sc_atac_data$X13 = NULL
 
 	# Select only TFs intersected between ATAC and RNA
-	tfs_common = intersect(sc_atac_tfs, sc_exp_data$gene)
+	genes_common = intersect(sc_atac_genes, sc_exp_data$gene)
 
-	sc_atac_data = sc_atac_data[sc_atac_tfs %in% tfs_common, ]
-	sc_atac_data = sc_atac_data[order(tfs_common),]
+	sc_atac_data = sc_atac_data[sc_atac_genes %in% genes_common, ]
+	sc_atac_data = sc_atac_data[order(genes_common),]
 
-	sc_exp_data_TFs = sc_exp_data[sc_exp_data$gene %in% tfs_common, ]
-	sc_exp_data_TFs = sc_exp_data_TFs[order(tfs_common),]
+	sc_exp_data_genes = sc_exp_data[sc_exp_data$gene %in% genes_common, ]
+	sc_exp_data_genes = sc_exp_data_genes[order(genes_common),]
 
 	# Filter ATAC matrix from unused celltypes and cells
 
@@ -82,18 +78,18 @@ epi_impute <- function(sc_exp_data, atac_bin_thrld = 100,
 
 	print('Binirize the matrix')
 	# Binirize the matrix
-	sc_exp_data_TFs_values = subset(sc_exp_data_TFs, select = - gene)
-	sc_exp_data_TFs_values = as.data.frame(as.matrix((sc_exp_data_TFs_values > 0) + 0))
-	sc_exp_data_TFs = cbind(sc_exp_data_TFs$gene, sc_exp_data_TFs_values)
-	colnames(sc_exp_data_TFs)[1] = "gene"
+	sc_exp_data_genes_values = subset(sc_exp_data_genes, select = - gene)
+	sc_exp_data_genes_values = as.data.frame(as.matrix((sc_exp_data_genes_values > 0) + 0))
+	sc_exp_data_genes = cbind(sc_exp_data_genes$gene, sc_exp_data_genes_values)
+	colnames(sc_exp_data_genes)[1] = "gene"
 
-	sc_exp_data_TFs = dcast(melt(sc_exp_data_TFs, id.vars = "gene"), variable ~ gene)
-	rownames(sc_exp_data_TFs) = sc_exp_data_TFs$variable
-	sc_exp_data_TFs$cells = gsub('_.*', '', sc_exp_data_TFs$variable)
-	sc_exp_data_TFs = sc_exp_data_TFs[order(sc_exp_data_TFs$cells),]
-	sc_exp_data_TFs$variable = NULL
+	sc_exp_data_genes = dcast(melt(sc_exp_data_genes, id.vars = "gene"), variable ~ gene)
+	rownames(sc_exp_data_genes) = sc_exp_data_genes$variable
+	sc_exp_data_genes$cells = gsub('_.*', '', sc_exp_data_genes$variable)
+	sc_exp_data_genes = sc_exp_data_genes[order(sc_exp_data_genes$cells),]
+	sc_exp_data_genes$variable = NULL
 
-	sc_data_list <- split(sc_exp_data_TFs , f = sc_exp_data_TFs$cells)
+	sc_data_list <- split(sc_exp_data_genes , f = sc_exp_data_genes$cells)
 	sc_data_list = lapply(sc_data_list, function(x){x$cells = NULL; as.data.frame(t(x))})
 
 	print('Imputation...')
@@ -108,8 +104,8 @@ epi_impute <- function(sc_exp_data, atac_bin_thrld = 100,
 		}
 
 		scRNAseq_imputed_list = as.data.frame(scRNAseq_imputed_list)
-		# scRNAseq_imputed_list$gene = tfs_common
-		rownames(scRNAseq_imputed_list) = tfs_common
+		# scRNAseq_imputed_list$gene = genes_common
+		rownames(scRNAseq_imputed_list) = genes_common
 	})
 
 	return(list(result = as.data.frame(t(scRNAseq_imputed_list)),
@@ -124,8 +120,8 @@ epi_impute <- function(sc_exp_data, atac_bin_thrld = 100,
 # sc_exp_data = as.data.frame(t(sc_exp_data))
 # rownames(sc_exp_data) = sub('[A-Z]{3}\\.', '', rownames(sc_exp_data))
 
-# save(sc_exp_data, file = "~/MIPT/epi_impute/data/GSE117498_scRNAseq_TFs.Rdata")
-# # write_feather(sc_exp_data, "~/MIPT/epi_impute/data/GSE117498_scRNAseq_TFs.feather")
+# save(sc_exp_data, file = "~/MIPT/epi_impute/data/GSE117498_scRNAseq_genes.Rdata")
+# # write_feather(sc_exp_data, "~/MIPT/epi_impute/data/GSE117498_scRNAseq_genes.feather")
 
 
 # bulk_peaks_data = as.data.frame(bulk_peaks_list[c("HSC", "CMP", "GMP")])
@@ -133,5 +129,5 @@ epi_impute <- function(sc_exp_data, atac_bin_thrld = 100,
 # rownames(bulk_peaks_data) = c("HSC", "CMP", "GMP")
 # colnames(bulk_peaks_data) = colnames(sc_exp_data)
 
-# save(bulk_peaks_data, file = "~/MIPT/epi_impute/data/bulk_ATAC_TFs.Rdata")
-# # write_feather(bulk_peaks_data, "~/MIPT/epi_impute/data/bulk_ATAC_TFs.feather")
+# save(bulk_peaks_data, file = "~/MIPT/epi_impute/data/bulk_ATAC_genes.Rdata")
+# # write_feather(bulk_peaks_data, "~/MIPT/epi_impute/data/bulk_ATAC_genes.feather")
