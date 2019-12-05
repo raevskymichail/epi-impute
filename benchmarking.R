@@ -27,10 +27,11 @@ bulk_peaks_data = get(load("~/MIPT/epi-impute/data/bulk_ATAC_genes.Rdata"))
 # CD59 and D49f/ITGA6 theoretically should be expressed in HSC but zeros in data
 # CD38 should be expressed at CMP and GMP but zeros in data
 # CD38 should be expressed at CMP but zeros in data
+# CD164 - is leaneage marker - but in data it's not expressed
 
-markers_list = list(HSC = list(plus = c("CD34", "CD164", "CD59", "ITGA6"), minus = c("CD38", "PTPRC", "FUT4", "TFRC", "ITGA2B", "CD19")),
-					CMP = list(plus = c("CD34", "CD164", "CD38", "FLT3"), minus = c("MME", "PTPRC", "FUT4", "TFRC", "ITGA2B", "CD19")),
-					GMP = list(plus = c("CD34", "CD164", "CD38", "PTPRC"), minus = c("MME", "FLT3", "FUT4", "TFRC", "ITGA2B", "CD19")))
+markers_list = list(HSC = list(plus = c("CD34", "CD59", "ITGA6"), minus = c("CD38", "PTPRC", "FUT4", "TFRC", "ITGA2B", "CD19")),
+					CMP = list(plus = c("CD34", "CD38", "FLT3"), minus = c("MME", "PTPRC", "FUT4", "TFRC", "ITGA2B", "CD19")),
+					GMP = list(plus = c("CD34", "CD38", "PTPRC"), minus = c("MME", "FLT3", "FUT4", "TFRC", "ITGA2B", "CD19")))
 
 
 
@@ -446,12 +447,12 @@ View(epi_impute_benchmarking_results)
 # Find optimal thresholds
 thresholds = c(20, 50, 100, 150, 200)
 for (i in 1:length(thresholds)) {
-	epi_impute_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data, 
-															   added_droputs_ratio = 0.75,
-															   define_classes_via = "markers",
-															   .markers_list = markers_list,
-															   imputation_func = epi_impute,
-															   atac_bin_thrld = thresholds[i])
+	epi_impute_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data_markers, 
+																   added_droputs_ratio = 0.75,
+																   define_classes_via = "markers",
+																   .markers_list = markers_list,
+																   imputation_func = epi_impute,
+																   atac_bin_thrld = thresholds[i])
 	print('------------')
 	print(paste0("used threshold: ", thresholds[i]))
 	print(paste0("recall: ", epi_impute_benchmarking_results[["recall"]]))
