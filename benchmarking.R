@@ -10,6 +10,9 @@ library(feather)
 library(reticulate)
 use_python('/home/mraevsky/miniconda3/bin/python3.7', required = TRUE)
 
+# library(future)
+# plan("multiprocess")
+
 ## Default - matrixes - cells-by-gene (cell name include celltype name)
 ## Only TFs
 # sc_exp_data = get(load("~/MIPT/epi-impute/data/GSE117498_scRNAseq_TFs.Rdata"))
@@ -20,6 +23,11 @@ sc_exp_data = get(load("~/MIPT/epi-impute/data/GSE117498_scRNAseq_genes.Rdata"))
 bulk_peaks_data = get(load("~/MIPT/epi-impute/data/bulk_ATAC_genes.Rdata"))
 
 # Define list of surface markers
+
+# CD59 and D49f/ITGA6 theoretically should be expressed in HSC but zeros in data
+# CD38 should be expressed at CMP and GMP but zeros in data
+# CD38 should be expressed at CMP but zeros in data
+
 markers_list = list(HSC = list(plus = c("CD34", "CD164", "CD59", "ITGA6"), minus = c("CD38", "PTPRC", "FUT4", "TFRC", "ITGA2B", "CD19")),
 					CMP = list(plus = c("CD34", "CD164", "CD38", "FLT3"), minus = c("MME", "PTPRC", "FUT4", "TFRC", "ITGA2B", "CD19")),
 					GMP = list(plus = c("CD34", "CD164", "CD38", "PTPRC"), minus = c("MME", "FLT3", "FUT4", "TFRC", "ITGA2B", "CD19")))
@@ -236,14 +244,14 @@ define_classes_via_markers <- function(sc_data, .markers_list = markers_list){
 		# negative class (all negative markers expression) -> TRUE, others -> FALSE
 		is_negative_class[sc_i, negative_markers] = TRUE
 		# TP -> TRUE, drop-outs, others -> FALSE
-		is_TP_class[sc_i, positive_markers] = sc_data[sc_i, positive_markers] != 0
+		is_TP_class[sc_i, positive_markers] = sc_data[sc_i, positive_markers] > 2 # more than 2 counts
 		# TN -> TRUE, wrong alignment, small expression -> FALSE
 		is_TN_class[sc_i, negative_markers] = sc_data[sc_i, negative_markers] == 0
 	}
 	# NOTE: is_negative_class is equal is_TN_class, because, it could be not a
 	# bad alignment but gene itself could be expressed but we don't see protein on the surface because
 	# of regulation on other level (mRNA expressed but protein suppresed)
-	return(list(is_positive_class = as.matrix(is_positive_class),
+	return(list(is_positive_class = as.matrix(is_TP_class), # NOTE
 				is_TP_class = as.matrix(is_TP_class),
 				is_negative_class = as.matrix(is_TN_class), # NOTE
 				is_TN_class = as.matrix(is_TN_class)))
@@ -327,17 +335,19 @@ define_classes_via_bulk <- function(sc_data, bulk_exp_data, .celltypes){
 
 
 # Generate datasets of different sparcity from given dataset
-eval_metrics_on_sparced_data <- function(sc_data, simulated_sparcity, define_classes_via = c("bulk", "markers"), .markers_list,
-																			bulk_data_for_TN, imputation_func, binarize_results = FALSE, ...){
+eval_metrics_on_sparced_data <- function(sc_data, simulated_sparcity, added_droputs_ratio, define_classes_via = c("bulk", "markers"), .markers_list,
+																			bulk_data_for_TN, imputation_func, binarize_results = FALSE, atac_bin_thrld, ...){
 	if (!require("dplyr")) install.packages("dplyr")
 
 	set.seed(42)
-
+	
 	initial_sparcity = sum(sc_data == 0) / prod(dim(sc_data))
 	print(paste0("Initial sparcity of the datasets is ", round(initial_sparcity, 2), '%'))
-
-	if (initial_sparcity > simulated_sparcity){
-		stop("Simulated_sparcity cannot be less than initial sparcity of the input sc_data")
+	
+	if (!missing(simulated_sparcity)){
+		if (initial_sparcity > simulated_sparcity){
+			stop("Simulated_sparcity cannot be less than initial sparcity of the input sc_data")
+		}	
 	}
 
 	# Define Positive and Negative classes
@@ -355,7 +365,15 @@ eval_metrics_on_sparced_data <- function(sc_data, simulated_sparcity, define_cla
 	negative_class_size = length(negative_vals)
 
 	# Generate drop-outs in sc_data
-	added_droputs_ratio = simulated_sparcity - initial_sparcity / length(positive_vals)
+	if (missing(simulated_sparcity) & missing(added_droputs_ratio)){
+		stop("Specify simulated_sparcity or added_droputs_ratio")
+	}
+
+	ifelse(missing(added_droputs_ratio), 
+		   added_droputs_ratio = simulated_sparcity - initial_sparcity / length(positive_vals),
+		   simulated_sparcity = added_droputs_ratio + initial_sparcity / length(positive_vals)
+	)
+
 
 	vals_to_dropout = sample(positive_vals, as.integer(added_droputs_ratio * length(positive_vals)))
 	sc_data[is_positive_class][vals_to_dropout] <- 0
@@ -377,6 +395,10 @@ eval_metrics_on_sparced_data <- function(sc_data, simulated_sparcity, define_cla
 	false_negative = n_sim_droupouts - true_positive
 	recall = true_positive / n_sim_droupouts
 
+	print(paste0("n_sim_droupouts: ", n_sim_droupouts))
+	print(paste0("negative_class_size: ", negative_class_size))
+
+
 	# Specifity = TNR = (1 - FPR) = 1 - FP/(FP + TN) = TN/(FP + TN) 
 	true_negative = sum(imputed_data[is_negative_class] == 0)
 	false_positive = negative_class_size - true_negative
@@ -393,21 +415,25 @@ eval_metrics_on_sparced_data <- function(sc_data, simulated_sparcity, define_cla
 }
 
 
+# for markers only^ subset only markers to speed up becnhmarking
+sc_exp_data_markers = sc_exp_data[, unique(unlist(markers_list))]
 
 
 
-
-magic_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data, 
-														  simulated_sparcity = 0.95,
+magic_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data_markers, 
+														  # simulated_sparcity = 0.95,
+														  added_droputs_ratio = 0.75,
 														  define_classes_via = "markers",
 														  .markers_list = markers_list,
 														  # .celltypes = c('HSC', 'CMP', 'GMP') 
 														  # bulk_data_for_TN = bulk_exp_data, 
-														  imputation_func = magic_pipeline)
+														  imputation_func = magic_pipeline,
+														  binarize_results = TRUE)
 View(magic_benchmarking_results)
 
-epi_impute_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data, 
-															   simulated_sparcity = 0.95, 
+epi_impute_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data_markers, 
+															   # simulated_sparcity = 0.95,
+															   added_droputs_ratio = 0.75,
 															   define_classes_via = "markers",
 															   .markers_list = markers_list,
 															   # .celltypes = c('HSC', 'CMP', 'GMP')

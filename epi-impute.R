@@ -5,10 +5,10 @@ library(feather)
 
 setwd('~/MIPT/')
 
-sc_atac_cell_names <- read_csv("data/GSE96769_cell_names_matrix.csv")
-sc_atac_data <- read_feather("data/GSE96769_scATACseq_matrix.feather")
-sc_atac_peaks_ann <- read_csv("data/GSE96769_PeakFile.csv")
-sc_exp_data = get(load("~/MIPT/epi_impute/data/GSE117498_scRNAseq_genes.Rdata"))
+# sc_atac_cell_names <- read_csv("data/GSE96769_cell_names_matrix.csv")
+# sc_atac_data <- read_feather("data/GSE96769_scATACseq_matrix.feather")
+# sc_atac_peaks_ann <- read_csv("data/GSE96769_PeakFile.csv")
+# sc_exp_data = get(load("~/MIPT/epi_impute/data/GSE117498_scRNAseq_genes.Rdata"))
 
 
 # Import scATACseq data and metadata
