@@ -1,7 +1,10 @@
 # epi-impute
 
 ## TO DO
-+ Fix problem with evaluating TPR and TNR in `benchmarking.R`
++ Add `annotatr` auto-annotating feature to the epi-impote
++ As a result, think of writing `preprocessing.R`
++ Improve speed of the epi-impute (profile and if needed use `disk.frame`)
++ Write `visualization.R` for benchmarking
 
 ### Datasets search:
 + scRNAseq + scATACseq for neural chest of _GAllus gallus_ (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE131688)

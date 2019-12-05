@@ -447,9 +447,10 @@ View(epi_impute_benchmarking_results)
 thresholds = c(20, 50, 100, 150, 200)
 for (i in 1:length(thresholds)) {
 	epi_impute_benchmarking_results = eval_metrics_on_sparced_data(sc_exp_data, 
-															   simulated_sparcity = 0.25, 
-															   bulk_data_for_TN = bulk_exp_data,
-															   epi_impute,
+															   added_droputs_ratio = 0.75,
+															   define_classes_via = "markers",
+															   .markers_list = markers_list,
+															   imputation_func = epi_impute,
 															   atac_bin_thrld = thresholds[i])
 	print('------------')
 	print(paste0("used threshold: ", thresholds[i]))

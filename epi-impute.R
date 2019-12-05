@@ -5,10 +5,10 @@ library(feather)
 
 setwd('~/MIPT/')
 
-# sc_atac_cell_names <- read_csv("data/GSE96769_cell_names_matrix.csv")
-# sc_atac_data <- read_feather("data/GSE96769_scATACseq_matrix.feather")
-# sc_atac_peaks_ann <- read_csv("data/GSE96769_PeakFile.csv")
-# sc_exp_data = get(load("~/MIPT/epi_impute/data/GSE117498_scRNAseq_genes.Rdata"))
+sc_atac_cell_names <- read_csv("/home/mraevsky/MIPT/data/GSE96769_cell_names_matrix.csv")
+sc_atac_data <- read_feather("/home/mraevsky/MIPT/data/GSE96769_scATACseq_matrix.feather")
+sc_atac_peaks_ann <- read_csv("/home/mraevsky/MIPT/data/GSE96769_PeakFile.csv")
+sc_exp_data = get(load("/home/mraevsky/MIPT/epi-impute/data/GSE117498_scRNAseq_genes.Rdata"))
 
 
 # Import scATACseq data and metadata
@@ -30,8 +30,11 @@ epi_impute <- function(sc_exp_data, atac_bin_thrld = 100,
 									sc_atac_peaks_ann = sc_atac_peaks_ann_){
 	# sc_exp_data should be a cells x genes matrix 
 	if (!require("rlist")) install.packages("rlist")
+	if (!require("data.table")) install.packages("data.table")
 
-	sc_exp_data = as.data.frame(t(sc_exp_data))
+	# Convert to matrix for fast transpose
+	# Q: Do I need as.data.frame()?
+	sc_exp_data = as.data.frame(t(as.matrix(sc_exp_data))) 
 	sc_exp_data$gene = rownames(sc_exp_data)
 
 	# Create version of ATAC matrix with only promoter peaks
@@ -41,9 +44,14 @@ epi_impute <- function(sc_exp_data, atac_bin_thrld = 100,
 
 	sc_atac_data = merge(sc_atac_data, promoters_genes[c('X13', 'PeakFile_Peak_ID')], by = 'PeakFile_Peak_ID')
 
-	sc_atac_data = aggregate(. ~ X13, subset(sc_atac_data, select = - PeakFile_Peak_ID), sum)
+
+	sc_atac_data <- setDT(sc_atac_data)
+	sc_atac_data = sc_atac_data[, lapply(.SD, sum), by = "X13", .SDcols = - "PeakFile_Peak_ID"]
+	# sc_atac_data = aggregate(. ~ X13, subset(sc_atac_data, select = - PeakFile_Peak_ID), sum)
 	sc_atac_genes = sc_atac_data$X13
 	sc_atac_data$X13 = NULL
+
+	dump = sc_atac_data
 
 	# Select only TFs intersected between ATAC and RNA
 	genes_common = intersect(sc_atac_genes, sc_exp_data$gene)
@@ -57,6 +65,7 @@ epi_impute <- function(sc_exp_data, atac_bin_thrld = 100,
 	# Filter ATAC matrix from unused celltypes and cells
 
 	sc_atac_cell_names = sc_atac_cell_names[grepl('HSC|CMP|GMP|MLP', sc_atac_cell_names$cell_types),]
+	sc_atac_data = as.data.frame(sc_atac_data) # next line will generate bool if comment this because of data.frame or use ", with=FALSE"
 	sc_atac_data = sc_atac_data[,colnames(sc_atac_data) %in% sc_atac_cell_names$cell_id]
 	sc_atac_cell_names = sc_atac_cell_names[sc_atac_cell_names$cell_id %in% colnames(sc_atac_data),]
 
