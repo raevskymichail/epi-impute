@@ -2,7 +2,6 @@
 
 ## TO DO
 + Fix problem with evaluating TPR and TNR in `benchmarking.R`
-+ Fix `simulated_sparcity`, `added_droputs_ratio` parsing with `missing()`
 
 ### Datasets search:
 + scRNAseq + scATACseq for neural chest of _GAllus gallus_ (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE131688)
