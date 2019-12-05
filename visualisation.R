@@ -1,3 +1,6 @@
+library("readr")
+library("feather")
+
 sc_exp_data = get(load("/home/mraevsky/MIPT/epi-impute/data/GSE117498_scRNAseq_genes.Rdata"))
 sc_atac_cell_names_ <- read_csv("/home/mraevsky/MIPT/data/GSE96769_cell_names_matrix.csv")
 sc_atac_data <- read_feather("/home/mraevsky/MIPT/data/GSE96769_scATACseq_matrix.feather")
@@ -6,7 +9,7 @@ sc_atac_peaks_ann_ <- read_csv("/home/mraevsky/MIPT/data/GSE96769_PeakFile.csv")
 
 
 compare_access_exp_of_gene <- function(sc_exp_data, sc_atac_data,
-									   celltype, gene,
+									   celltypes, gene, gene_regions_in_atac,
 									   sc_atac_cell_names = sc_atac_cell_names_, 
 									   sc_atac_peaks_ann = sc_atac_peaks_ann_){
 
@@ -21,10 +24,11 @@ compare_access_exp_of_gene <- function(sc_exp_data, sc_atac_data,
 
 	# Create version of ATAC matrix with only promoter peaks
 
-	promoters = sc_atac_peaks_ann[grepl('promoter|TSS', sc_atac_peaks_ann$X7),]
-	promoters_genes = promoters[order(promoters$X13),]
 
-	sc_atac_data = merge(sc_atac_data, promoters_genes[c('X13', 'PeakFile_Peak_ID')], by = 'PeakFile_Peak_ID')
+	gene_regions = sc_atac_peaks_ann[grepl(paste(gene_regions_in_atac, collapse="|"), sc_atac_peaks_ann$X7),]
+	gene_regions_vec = gene_regions[order(gene_regions$X13),]
+
+	sc_atac_data = merge(sc_atac_data, gene_regions_vec[c('X13', 'PeakFile_Peak_ID')], by = 'PeakFile_Peak_ID')
 
 
 	sc_atac_data <- setDT(sc_atac_data)
@@ -41,19 +45,23 @@ compare_access_exp_of_gene <- function(sc_exp_data, sc_atac_data,
 
 	sc_exp_data_genes = sc_exp_data[sc_exp_data$gene %in% genes_common, ]
 	sc_exp_data_genes = sc_exp_data_genes[order(genes_common),]
+
 	sc_exp_data$gene = NULL
 
-
-	cells = sc_atac_cell_names[grepl(celltype, sc_atac_cell_names$cell_types),]
+	celltypes_regex = paste(celltypes, collapse = "|")
+	selected_atac_cells = sc_atac_cell_names$cell_id[grepl(celltypes_regex, sc_atac_cell_names$cell_types)]
 	sc_atac_data = as.data.frame(sc_atac_data)
-	test_atac = sc_atac_data[genes_common %in% gene, colnames(sc_atac_data) %in% cells$cell_id]
+	rownames(sc_atac_data) = genes_common
+	test_atac = sc_atac_data[gene, selected_atac_cells]
 
-	test_exp = sc_exp_data[genes_common %in% gene, colnames(sc_atac_data) %in% cells$cell_id]
+	selected_exp_cells = grepl(celltypes_regex, colnames(sc_exp_data))
+	test_exp = sc_exp_data[gene, selected_exp_cells]
 
-	par(mfrow=c(1,2))
-	hist(as.matrix(test_atac), main = "scATAC-seq", xlab = "values")
-	hist(as.matrix(test_exp), main = "scRNA-seq", xlab = "values")
+	par(mfrow = c(1,2))
+	hist(as.matrix(test_atac), main = NULL, xlab = sprintf("scATAC-seq counts \n (%s)", paste(gene_regions_in_atac, collapse = ", ")))
+	hist(as.matrix(test_exp), main = NULL, xlab = "scRNA-seq counts")
+	title(main = sprintf("%s in %s", gene, paste(celltypes, collapse = ", ")), outer = TRUE, line = -1)
 }
 
 
-compare_access_exp_of_gene(sc_exp_data, sc_atac_data, celltype = "HSC", gene = "CD34")
+compare_access_exp_of_gene(sc_exp_data, sc_atac_data, celltypes = "HSC", gene = "CD34", gene_regions_in_atac = c("promoter", "TSS"))
