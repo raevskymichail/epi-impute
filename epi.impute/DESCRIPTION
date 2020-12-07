@@ -1,13 +1,23 @@
 Package: epi.impute
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Epi-Impute: single-cell RNA-seq imputation via integration with single-cell ATAC-seq
+Version: 0.0.1
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Mikhail",
+           family = "Raevskiy",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
+           email = "raevskii.mm@phystech.edu",
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: What license it uses
+Description: Epi-Impute, a computational tool for imputing scRNA-seq data from DNA accessibility data (scATAC-seq) from consistent cell-type populations.
+Depends: R (>= 3.2.0)
+License: MIT
 Encoding: UTF-8
 LazyData: true
+Imports:
+    rlist
+    reshape2
+    data.table
+    dplyr
+Suggests:
+    ggplot2
+    feather
+    ggvis

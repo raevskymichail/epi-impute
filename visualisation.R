@@ -7,7 +7,6 @@ sc_atac_data <- read_feather("/home/mraevsky/MIPT/data/GSE96769_scATACseq_matrix
 sc_atac_peaks_ann_ <- read_csv("/home/mraevsky/MIPT/data/GSE96769_PeakFile.csv")
 
 
-
 compare_access_exp_of_gene <- function(sc_exp_data, sc_atac_data,
 									   celltypes, gene, gene_regions_in_atac,
 									   sc_atac_cell_names = sc_atac_cell_names_, 
