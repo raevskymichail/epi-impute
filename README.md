@@ -52,13 +52,13 @@ Where `path_to_archive` would represent the full path and file name:
 ```r
 library("epi-impute")
 
-example_data <- load_example_data()
+data <- load_example_data()
 
-result <- epi_impute(sc_exp_data = example_data[["sc_exp_data"]],
-                     sc_atac_data = example_data[["sc_atac_data"]],
-                     sc_atac_cell_names = exampl_data[["sc_atac_cell_names"]],
-                     sc_atac_peaks_ann = example_data[["sc_atac_peaks_ann"]],
-                     cell_types = c("HSC", "CMP", "GMP"))
+data_imputed <- epi_impute(sc_exp_data = data[["sc_exp_data"]],
+                           sc_atac_data = data[["sc_atac_data"]],
+                           sc_atac_cell_names = data[["sc_atac_cell_names"]],
+                           sc_atac_peaks_ann = data[["sc_atac_peaks_ann"]],
+                           cell_types = c("HSC", "CMP", "GMP"))
 ```
 
 ## Help
