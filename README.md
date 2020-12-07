@@ -23,6 +23,7 @@ For preprocessing of scATAC-seq data, please first put all the `.bam` files for 
 * feather
 * rlist
 * data.table
+* RCurl
 * MACS
 * UMAP (https://github.com/lmcinnes/umap)
 
@@ -51,10 +52,13 @@ Where `path_to_archive` would represent the full path and file name:
 ```r
 library("epi-impute")
 
-data_sc_exp <- demo_data[[1]]
-data_sc_atac <- demo_data[[2]]
+example_data <- load_example_data()
 
-result <- epi_impute(demo_data)
+result <- epi_impute(sc_exp_data = example_data[["sc_exp_data"]],
+                     sc_atac_data = example_data[["sc_atac_data"]],
+                     sc_atac_cell_names = exampl_data[["sc_atac_cell_names"]],
+                     sc_atac_peaks_ann = example_data[["sc_atac_peaks_ann"]],
+                     cell_types = c("HSC", "CMP", "GMP"))
 ```
 
 ## Help

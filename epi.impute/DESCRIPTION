@@ -17,7 +17,9 @@ Imports:
     reshape2
     data.table
     dplyr
+    RCurl
+    feather
 Suggests:
     ggplot2
-    feather
     ggvis
+    
