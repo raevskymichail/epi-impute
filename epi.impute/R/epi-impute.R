@@ -101,13 +101,24 @@ load_example_data <- function() {
   library(readr)
   library(feather)
 
-  sc_atac_cell_names <- read_csv(url("https://raw.github.com/raevskymichail/epi-impute/master/data/GSE96769_cell_names_matrix.csv"))
-  sc_atac_data <- read_feather(url("https://raw.github.com/raevskymichail/epi-impute/master/data/GSE96769_scATACseq_matrix.feather"))
-  sc_atac_peaks_ann <- read_csv(url("https://raw.github.com/raevskymichail/epi-impute/master/data/GSE96769_PeakFile.csv"))
-  sc_exp_data <- get(load(url("https://raw.github.com/raevskymichail/epi-impute/master/data/GSE117498_scRNAseq_genes.Rdata")))
+  sc_atac_cell_names <- read_csv(url("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE96769_cell_names_matrix.csv"))
+  sc_atac_peaks_ann <- read_csv(url("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE96769_PeakFile.csv"))
+  sc_exp_data <- get(load(url("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE117498_scRNAseq_genes.Rdata")))
+  sc_atac_data <- bdown("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE96769_scATACseq_matrix.feather", "GSE96769_scATACseq_matrix.feather")
 
   return(list(sc_atac_cell_names = sc_atac_cell_names,
-                    sc_atac_data = sc_atac_data,
-                    sc_atac_peaks_ann = sc_atac_peaks_ann,
-                    sc_exp_data = sc_exp_data))
+              sc_atac_data = sc_atac_data,
+              sc_atac_peaks_ann = sc_atac_peaks_ann,
+              sc_exp_data = sc_exp_data))
+}
+
+#' Download file from remote FTP server with specified name
+#'
+#' @export
+bdown <- function(url, file) {
+  library("RCurl")
+  f <- CFILE(file, mode = "wb")
+  a <- curlPerform(url = url, writedata = f@ref, noprogress = FALSE)
+  close(f)
+  return(a)
 }
