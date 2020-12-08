@@ -14,4 +14,4 @@ Encoding: UTF-8
 LazyData: true
 Imports: rlist, reshape2, data.table, dplyr, RCurl, feather
 Suggests: ggplot2, ggvis
-    
+RoxygenNote: 7.1.1.9000
