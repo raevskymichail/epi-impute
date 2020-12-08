@@ -19,6 +19,7 @@ For preprocessing of scATAC-seq data, please first put all the `.bam` files for 
 
 ## Requirements
 
+* readr
 * reshape2
 * feather
 * rlist
@@ -32,7 +33,7 @@ For preprocessing of scATAC-seq data, please first put all the `.bam` files for 
 ### Install from Github
 ```r
 library(devtools)
-install_github("raevskymichail/epi-impute/epi.impute/R")
+install_github("raevskymichail/epi-impute/epi.impute")
 ```
 
 ### Install from source codes
@@ -50,7 +51,7 @@ Where `path_to_archive` would represent the full path and file name:
 ## Quick start
 
 ```r
-library("epi-impute")
+library("epi.impute")
 
 data <- load_example_data()
 

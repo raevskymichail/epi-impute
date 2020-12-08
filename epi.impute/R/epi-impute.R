@@ -101,10 +101,15 @@ load_example_data <- function() {
   library(readr)
   library(feather)
 
-  sc_atac_cell_names <- read_csv(url("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE96769_cell_names_matrix.csv"))
-  sc_atac_peaks_ann <- read_csv(url("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE96769_PeakFile.csv"))
+  print("Loading example scRNA-seq count matrix...")
   sc_exp_data <- get(load(url("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE117498_scRNAseq_genes.Rdata")))
-  sc_atac_data <- bdown("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE96769_scATACseq_matrix.feather", "GSE96769_scATACseq_matrix.feather")
+  print("Loading scATAC-seq cell-type annotations...")
+  sc_atac_cell_names <- read_csv(url("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE96769_cell_names_matrix.csv"))
+  print("Loading scATAC-seq peaks annotations...")
+  sc_atac_peaks_ann <- read_csv(url("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE96769_PeakFile.csv"))
+  print("Loading example scATAC-seq count matrix...")
+  bdown("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE96769_scATACseq_matrix.feather", "GSE96769_scATACseq_matrix.feather")
+  sc_atac_data <- read_feather("GSE96769_scATACseq_matrix.feather")
 
   return(list(sc_atac_cell_names = sc_atac_cell_names,
               sc_atac_data = sc_atac_data,
