@@ -124,9 +124,9 @@ load_example_data <- function() {
 
 #' Download file from remote FTP server with specified name
 #'
+#' @import RCurl
 #' @export
 bdown <- function(url, file) {
-  library("RCurl")
   f <- CFILE(file, mode = "wb")
   a <- curlPerform(url = url, writedata = f@ref, noprogress = FALSE)
   close(f)
