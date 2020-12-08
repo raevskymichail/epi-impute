@@ -20,6 +20,9 @@
 #' @param atac_bin_thrld a numeric value for accessibility threshold used for
 #' primary binirization of peaks in scATAC-seq matrix.
 #' @return a data frame containg an imputed single-cell RNA-seq matrix
+#'
+#' @import data.table
+#' @import rlist
 #' 
 #' @export
 epi_impute <- function(sc_exp_data, sc_atac_data, sc_atac_cell_names,
@@ -28,10 +31,10 @@ epi_impute <- function(sc_exp_data, sc_atac_data, sc_atac_cell_names,
   sc_exp_data <- as.data.frame(t(as.matrix(sc_exp_data)))
   sc_exp_data$gene <- rownames(sc_exp_data)
 
-  promoters <- sc_atac_peaks_ann[grepl('promoter|TSS', sc_atac_peaks_ann$X7),]
+  promoters <- sc_atac_peaks_ann[grepl("promoter|TSS", sc_atac_peaks_ann$X7),]
   promoters_genes <- promoters[order(promoters$X13),]
 
-  sc_atac_data <- merge(sc_atac_data, promoters_genes[c('X13', 'PeakFile_Peak_ID')], by = 'PeakFile_Peak_ID')
+  sc_atac_data <- merge(sc_atac_data, promoters_genes[c("X13", "PeakFile_Peak_ID")], by = "PeakFile_Peak_ID")
 
   sc_atac_data <- setDT(sc_atac_data)
   sc_atac_data <- sc_atac_data[, lapply(.SD, sum), by = "X13", .SDcols = -"PeakFile_Peak_ID"]
@@ -61,22 +64,24 @@ epi_impute <- function(sc_exp_data, sc_atac_data, sc_atac_cell_names,
   }
   names(bulk_peaks_list) <- cell_types
 
-  print('Binirize the matrix')
+  print("Binirize the matrix")
   sc_exp_data_genes_values <- subset(sc_exp_data_genes, select = -gene)
   sc_exp_data_genes_values <- as.data.frame(as.matrix((sc_exp_data_genes_values > 0) + 0))
   sc_exp_data_genes <- cbind(sc_exp_data_genes$gene, sc_exp_data_genes_values)
   colnames(sc_exp_data_genes)[1] <- "gene"
 
-  sc_exp_data_genes <- dcast(melt(sc_exp_data_genes, id.vars = "gene"), variable ~ gene)
+  suppressWarnings(
+    sc_exp_data_genes <- dcast(melt(sc_exp_data_genes, id.vars = "gene"), variable ~ gene)
+  )
   rownames(sc_exp_data_genes) <- sc_exp_data_genes$variable
-  sc_exp_data_genes$cells <- gsub('_.*', '', sc_exp_data_genes$variable)
+  sc_exp_data_genes$cells <- gsub("_.*", "", sc_exp_data_genes$variable)
   sc_exp_data_genes <- sc_exp_data_genes[order(sc_exp_data_genes$cells),]
   sc_exp_data_genes$variable <- NULL
 
   sc_data_list <- split(sc_exp_data_genes, f = sc_exp_data_genes$cells)
   sc_data_list <- lapply(sc_data_list, function(x) { x$cells = NULL; as.data.frame(t(x)) })
 
-  print('Imputation...')
+  print("Imputation...")
   runtime <- system.time({
     celltypes_to_impute <- cell_types
     scRNAseq_imputed_list <- list()
@@ -95,12 +100,12 @@ epi_impute <- function(sc_exp_data, sc_atac_data, sc_atac_cell_names,
 
 #' Loads example data for imputation
 #'
+#' @import RCurl
+#' @import readr
+#' @import feather
+#'
 #' @export
 load_example_data <- function() {
-  library(RCurl)
-  library(readr)
-  library(feather)
-
   print("Loading example scRNA-seq count matrix...")
   sc_exp_data <- get(load(url("http://himorna.fbras.ru/~mraevsky/Epi-Impute/GSE117498_scRNAseq_genes.Rdata")))
   print("Loading scATAC-seq cell-type annotations...")
