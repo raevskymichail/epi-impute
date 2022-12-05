@@ -4,10 +4,10 @@ citEntry(entry = "article",
   author = personList(as.person("Mikhail Raevskiy"),
                       as.person("Author"),
                       as.person("Author")),
-  title = "Molecular mechanisms implicated in myogenic differentiation of human alveolar mucosa derived cells",
+  title = "Epi-Impute: single-cell RNA-seq imputation via integration with single-cell ATAC-seq data",
   journal = "",
   year = "2022",
   doi = "",
   url = "https://doi.org/",
-  textVersion = "Author et al. Molecular mechanisms implicated in myogenic differentiation of human alveolar mucosa derived cells. Journal (2022)"
+  textVersion = "Author et al. Epi-Impute: single-cell RNA-seq imputation via integration with single-cell ATAC-seq data. Journal (2022)"
 )
