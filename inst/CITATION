@@ -1,0 +1,13 @@
+citHeader("To cite current tool-box in publications, please use:")
+
+citEntry(entry = "article",
+  author = personList(as.person("Mikhail Raevskiy"),
+                      as.person("Author"),
+                      as.person("Author")),
+  title = "Molecular mechanisms implicated in myogenic differentiation of human alveolar mucosa derived cells",
+  journal = "",
+  year = "2022",
+  doi = "",
+  url = "https://doi.org/",
+  textVersion = "Author et al. Molecular mechanisms implicated in myogenic differentiation of human alveolar mucosa derived cells. Journal (2022)"
+)

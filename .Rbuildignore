@@ -1,0 +1,14 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^.*\.old$
+^docs$
+^pkgdown$
+^index\.md$
+^vignettes$
+^LICENSE\.md$
+.git
+^_pkgdown\.yaml$
+.travis.yml
+appveyor.yml
+cran-comments.md
+travis_setup.sh
