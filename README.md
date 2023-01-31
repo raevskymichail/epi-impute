@@ -38,7 +38,7 @@ install_github("raevskymichail/epi-impute/epi.impute")
 
 ### Install from source codes
 
-Download source codes [here](https://github.com/raevskymichail/epi-impute/blob/master/epi-impute.tar.gz?raw=true) and then type in R session:
+Download source codes and then type in R session:
 
 ```r
 install.packages(path_to_archive, type = 'source', rep = NULL)
