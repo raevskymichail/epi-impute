@@ -19,6 +19,8 @@ For preprocessing of scATAC-seq data, please first put all the `.bam` files for 
 
 ## Requirements
 
+Epi-Impute requires R version 4.0.0 or above and following packages:
+
 * readr
 * reshape2
 * feather
