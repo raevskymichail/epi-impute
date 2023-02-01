@@ -43,7 +43,7 @@ install_github("raevskymichail/epi-impute/epi.impute")
 Download source codes and then type in R session:
 
 ```r
-install.packages(path_to_archive, type = 'source', rep = NULL)
+install.packages(path_to_archive, type = "source", rep = NULL)
 ```
 
 Where `path_to_archive` would represent the full path and file name:
@@ -63,25 +63,20 @@ data_imputed <- epi_impute(sc_exp_data = data[["sc_exp_data"]],
                            sc_atac_peaks_ann = data[["sc_atac_peaks_ann"]],
                            cell_types = c("HSC", "CMP", "GMP"))
 ```
+
 Where
 
-**sc_exp_data** a single-cell RNA-seq count matrix, where rownames are
-HGNC genes (HUGO) and colnames are cell ids
-**sc_atac_data** a single-cell ATAC-seq count matrix, where rownames are
-cell ids and colnames are ids for euchromatine peaks (obtained from peak caller,
-for ex. MACS2)
-**sc_atac_cell_names** a matrix, containing description and annotation for
-cell types observed in scATAC-seq count matrix. It should have rownames (cell
-ids) that
-match rownames of `sc_atac_data`
-**sc_atac_peaks_ann** a matrix, containing description for euchromatine
-peaks, presented in count matrix. It should have rownames (peak ids) that
-match colnames of `sc_atac_data`
-**cell_types** a vector, containing names for cell types, presented in
-count matrix.
-**atac_bin_thrld** a numeric value for accessibility threshold used for
-primary binirization of peaks in scATAC-seq matrix.
+**sc_exp_data** – scRNA-seq count matrix, where rownames are HGNC genes (HUGO) and colnames are *cell ids*
 
+**sc_atac_data** – scATAC-seq count matrix, where rownames are *cell ids* and colnames are ids for euchromatine peaks (obtained from peak caller, for ex. MACS2)
+
+**sc_atac_cell_names** – matrix, containing description and annotation for cell types observed in scATAC-seq count matrix. It should have rownames (*cell ids*) that match rownames of `sc_atac_data`
+
+**sc_atac_peaks_ann** – matrix with annotations (coordinates) for euchromatine peaks, presented in the scATAC-seq count matrix. It should have rownames (*peak ids*) that match colnames of `sc_atac_data`
+
+**cell_types** – vector, containing names for cell types, presented in count matrix.
+
+**atac_bin_thrld** – numeric value for accessibility threshold used for primary binirization of peaks in scATAC-seq matrix.
 
 ## Help
 
