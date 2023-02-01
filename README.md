@@ -13,9 +13,9 @@ Epi-Impute exploits the idea of open chromatin in active *cis*-regulatory elemen
 
 ## Preprocessing
 
-For preprocessing of scRNA-seq data, please follow the standard processing pipeline to get the expression count matrix, where each row represents a gene and each column represents a cell.
+For preprocessing of scRNA-seq data, please follow the standard processing pipeline to get the expression count matrix, where each row represents a gene and each column represents a cell. Epi-Impute supports both raw and normalized data.
 
-For preprocessing of scATAC-seq data, please first put all the `.bam` files for each cell into a dedicated folder. Then run the preprocessing script we provided to get a count matrix and annotations files.
+For scATAC-seq data, please, obtain a count matrix and annotations with preprocessing pipeline you are using.
 
 ## Requirements
 
