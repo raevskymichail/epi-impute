@@ -64,11 +64,11 @@ epi_impute <- function(sc_exp_data, sc_atac_data, sc_atac_cell_names,
   }
   names(bulk_peaks_list) <- cell_types
 
-  print("Binirize the matrix")
-  sc_exp_data_genes_values <- subset(sc_exp_data_genes, select = -gene)
-  sc_exp_data_genes_values <- as.data.frame(as.matrix((sc_exp_data_genes_values > 0) + 0))
-  sc_exp_data_genes <- cbind(sc_exp_data_genes$gene, sc_exp_data_genes_values)
-  colnames(sc_exp_data_genes)[1] <- "gene"
+  # print("Binirize the matrix")
+  # sc_exp_data_genes_values <- subset(sc_exp_data_genes, select = -gene)
+  # sc_exp_data_genes_values <- as.data.frame(as.matrix((sc_exp_data_genes_values > 0) + 0))
+  # sc_exp_data_genes <- cbind(sc_exp_data_genes$gene, sc_exp_data_genes_values)
+  # colnames(sc_exp_data_genes)[1] <- "gene"
 
   suppressWarnings(
     sc_exp_data_genes <- dcast(melt(sc_exp_data_genes, id.vars = "gene"), variable ~ gene)
