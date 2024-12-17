@@ -76,7 +76,7 @@ Where
 
 **cell_types** – vector, containing names for cell types, presented in count matrix.
 
-**atac_bin_thrld** – numeric value for accessibility threshold used for primary binirization of peaks in scATAC-seq matrix.
+**atac_bin_thrld** – numeric value for accessibility threshold used for primary binarization of peaks in scATAC-seq matrix.
 
 ## Help
 
